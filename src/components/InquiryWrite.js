@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 const InquiryWrite = ({ categories, setCategories }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [author, setAuthor] = useState('');
   const [searchParams] = useSearchParams();
   const category = searchParams.get('category') || 'notice';
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ const InquiryWrite = ({ categories, setCategories }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!title || !content || !author) {
+    if (!title || !content) {
       alert('모든 필드를 입력해주세요.');
       return;
     }
@@ -21,7 +20,6 @@ const InquiryWrite = ({ categories, setCategories }) => {
       id: Date.now(),
       title,
       content,
-      author,
       createdAt: new Date().toISOString().split('T')[0],
       views: 0,
     };
@@ -66,18 +64,6 @@ const InquiryWrite = ({ categories, setCategories }) => {
             className="form-textarea"
             placeholder="내용을 입력하세요"
             rows="10"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="author">작성자</label>
-          <input
-            id="author"
-            type="text"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            className="form-input"
-            placeholder="작성자를 입력하세요"
             required
           />
         </div>

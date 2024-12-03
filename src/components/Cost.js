@@ -1,6 +1,5 @@
 import React from 'react';
 
-
 const Cost = () => {
   return (
     <div className="pricing-container">
@@ -14,33 +13,25 @@ const Cost = () => {
           </p>
         </div>
         <div className="header-image">
-          <img src="/images/costImage.png" alt="요금 안내 헤더 이미지" />
+          <img src="/images/cost.png" alt="요금 안내 헤더 이미지" />
         </div>
       </section>
 
       {/* 아래쪽 섹션 */}
       <section className="pricing-details">
-        <h2 className="main-banner">요금 안내</h2>
+        <h2 className="main-banner">요금 문의</h2>
         <div className="pricing-section">
-          {/* 광고 요금 */}
+          {/* 광고 문의 */}
           <div className="pricing-category">
-            <img src="/images/costImage.png" alt="광고 요금" className="pricing-image" />
-            <h3>광고 요금</h3>
-            <ul>
-              <li>소셜 미디어 광고: 100,000원/월</li>
-              <li>검색 엔진 광고: 200,000원/월</li>
-              <li>배너 광고: 150,000원/월</li>
-            </ul>
+            <h3>광고 문의</h3>
+            <img src="/images/advert.png" alt="광고 문의" className="pricing-image" />
+            <button className="consult-button">상담하기</button>
           </div>
-          {/* 사용자 요금 */}
+          {/* 사용자 문의 */}
           <div className="pricing-category">
-            <img src="/images/costImage.png" alt="사용자 요금" className="pricing-image" />
-            <h3>사용자 요금</h3>
-            <ul>
-              <li>개인 사용자: 50,000원/월</li>
-              <li>소규모 기업: 100,000원/월</li>
-              <li>대기업: 300,000원/월</li>
-            </ul>
+            <h3>사용자 문의</h3>
+            <img src="/images/user.png" alt="사용자 문의" className="pricing-image" />
+            <button className="consult-button">상담하기</button>
           </div>
         </div>
       </section>

@@ -39,7 +39,6 @@ const Inquiry = ({ categories, setCategories }) => {
             <tr>
               <th className="board-header">번호</th>
               <th className="board-header">제목</th>
-              <th className="board-header">작성자</th>
               <th className="board-header">작성일</th>
               <th className="board-header">조회</th>
             </tr>
@@ -60,7 +59,6 @@ const Inquiry = ({ categories, setCategories }) => {
                       {post.title}
                     </Link>
                   </td>
-                  <td className="board-data">{post.author}</td>
                   <td className="board-data">{post.createdAt}</td>
                   <td className="board-data">{post.views}</td>
                 </tr>

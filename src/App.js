@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import Home from './components/Home.js';
+import Home from './components/Home';
+import Transform from './components/Transform';
 import Inquiry from './components/Inquiry.js';
 import './App.css';
 import mmvLogo from './mmvlogo.png'; // 로고 이미지 경로
@@ -10,6 +11,7 @@ import Login from './components/Login.js';
 
 
 const App = () => {
+  const navbarHeight = 60;
 
   const [categories, setCategories] = useState({
     general: [],
@@ -23,13 +25,14 @@ const App = () => {
     <Router>
       <div className="app-layout">
         {/* 상단 네비게이션 바 */}
-        <header className="navbar">
+        <header className="navbar" style={{ height: `${navbarHeight}px` }}>
           <div className="navbar-left">
             {/* 로고 이미지 */}
             <img src={mmvLogo} alt="MMV Logo" className="navbar-logo" />
           </div>
           <ul className="navbar-center">
             <li><Link to="/" className="navbar-link">소개</Link></li>
+            <li><Link to="/Transform" className="navbar-link">변환</Link></li>
             <li><Link to="/inquiry" className="navbar-link">문의</Link></li>
             <li><Link to="/pricing" className="navbar-link">요금</Link></li>
           </ul>
@@ -42,6 +45,7 @@ const App = () => {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/transform" element={<Transform />} />
             <Route path="/login" element={<Login />} />
             <Route path="/pricing" element={<Cost />} /> {/* 요금 안내 페이지 경로 추가 */}
           </Routes>

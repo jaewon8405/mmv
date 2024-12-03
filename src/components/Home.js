@@ -1,225 +1,201 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState} from 'react';
 
 const Home = () => {
-  const [status, setStatus] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [fileList, setFileList] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const containerRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
-  const videos = [
-    { src: './videos/test.mp4', title: '원본' },
-    { src: './videos/output.mp4', title: '변환' },
+  const steps = [
+    {
+      title: "무료 상담",
+      description: "간편하게 상담 신청 ."
+    },
+    {
+      title: "정보 입력",
+      description: "필요한 정보를 입력하여 서비스 세부 설정을 진행하세요."
+    },
+    {
+      title: "맞춤형 서비스 확인",
+      description: "제공된 서비스 옵션을 검토하세요."
+    },
+    {
+      title: "결제 진행",
+      description: "선택한 서비스에 대해 결제를 완료하세요."
+    },
+    {
+      title: "서비스 시작",
+      description: "최적화된 광고 서비스를 바로 시작하세요!"
+    },
   ];
 
-  const updateStatus = (message) => setStatus(message);
+  const handleScroll = (direction) => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const itemWidth = container.firstChild.offsetWidth + 20; // 아이템 너비 + 간격
+      const scrollAmount = direction === "left" ? -itemWidth : itemWidth;
 
-  const handleFileChange = (file) => {
-    setSelectedFile(file);
-    updateStatus(`${file.name} 선택됨.`);
-  };
-
-  const removeSelectedFile = () => {
-    setSelectedFile(null);
-  };
-
-  const uploadFile = async () => {
-    if (!selectedFile) {
-      updateStatus('업로드할 파일을 선택해주세요.');
-      return;
-    }
-
-    const apiUrl = 'https://fipoc9b835.execute-api.ap-northeast-2.amazonaws.com/Prod/';
-
-    const reader = new FileReader();
-    reader.onloadend = async function () {
-      const base64File = reader.result.split(',')[1];
-      const requestBody = {
-        file_name: selectedFile.name,
-        file_content: base64File,
-      };
-
-      try {
-        updateStatus('업로드 중...');
-        setUploadProgress(50);
-
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (response.ok) {
-          updateStatus('업로드 완료!');
-          setUploadProgress(100);
-          fetchFileList();
-          removeSelectedFile(); // 업로드 후 초기화
-        } else {
-          const errorText = await response.text();
-          updateStatus(`오류 발생: ${errorText}`);
-        }
-      } catch (error) {
-        updateStatus(`오류 발생: ${error.message}`);
-      } finally {
-        setTimeout(() => {
-          setUploadProgress(0);
-        }, 3000);
-      }
-    };
-
-    reader.readAsDataURL(selectedFile);
-  };
-
-  const fetchFileList = async () => {
-    const apiUrl = 'https://fipoc9b835.execute-api.ap-northeast-2.amazonaws.com/Prod/files';
-
-    try {
-      const response = await fetch(apiUrl);
-      const files = await response.json();
-      setFileList(files);
-    } catch (error) {
-      console.error('파일 목록 가져오기 오류:', error);
+      container.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
     }
   };
 
-  const handleDragOver = (event) => {
-    event.preventDefault();
-    setIsDragging(true);
+  const handleMouseDown = (e) => {
+    if (containerRef.current) {
+      setIsDragging(true);
+      setStartX(e.pageX - containerRef.current.offsetLeft);
+      setScrollLeft(containerRef.current.scrollLeft);
+    }
   };
 
-  const handleDragLeave = () => {
+  const handleMouseMove = (e) => {
+    if (!isDragging || !containerRef.current) return;
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // 드래그 거리
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
     setIsDragging(false);
   };
 
-  const handleDrop = (event) => {
-    event.preventDefault();
+  const handleMouseLeave = () => {
     setIsDragging(false);
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      handleFileChange(file);
-    }
   };
 
-  const handleClick = () => {
-    document.getElementById('fileInput').click();
-  };
-
+  const services = [
+    {
+      title: "영상의 카테고리 파악",
+      description: "영상의 카테고리를 스스로 파악.",
+      image: "./images/categories.png",
+    },
+    {
+      title: "가장 적합한 광고",
+      description: "영상의 가장 어울리는 광고 제공.",
+      image: "./images/recommend.png",
+    },
+    {
+      title: "불편한 광고 시청 시간 감소",
+      description: "영상 중간에 광고가 필요없음.",
+      image: "./images/view.png",
+    },
+  ];
 
   useEffect(() => {
-    fetchFileList();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate');
+          } else {
+            entry.target.classList.remove('animate');
+          }
+        });
+      },
+      { threshold: 0.5 } // 50% 이상 보일 때 애니메이션 시작
+    );
+
+    const sections = document.querySelectorAll('.section');
+    sections.forEach((section) => observer.observe(section));
+
+    // Observer 해제
+    return () => {
+      sections.forEach((section) => observer.unobserve(section));
+    };
+
+    
   }, []);
-
   return (
-    <div className="home-container">
-      {/* 메인 배너 섹션 */}
-      <section className="main-banner">
-        <h2>동영상 변환하기</h2>
-        <div
-          className={`upload-section ${isDragging ? 'dragging' : ''}`}
-          onClick={handleClick}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <input
-            type="file"
-            id="fileInput"
-            style={{ display: 'none' }}
-            onChange={(e) => handleFileChange(e.target.files[0])}
-          />
-          <p>
-            {selectedFile ? (
-              <>
-                {selectedFile.name}{' '}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeSelectedFile();
-                  }}
-                  className="remove-button"
-                >
-                  삭제
-                </button>
-              </>
-            ) : (
-              '여기를 클릭하거나 파일을 드래그하세요.'
-            )}
+    <div className="home">
+      {/* Hero 섹션 */}
+      <header className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">맞춤형 광고 서비스</h1>
+          <p className="hero-description">
+            영상에 가장 적합한 광고를 제공해주는<br />
+            MMV의 최적화된 광고 서비스를 만나보세요.
           </p>
+          <button className="cta-button">무료 상담 받기</button>
         </div>
-        <div className="upload-button-container">
-          <button onClick={uploadFile} disabled={!selectedFile} className="upload-button">
-            업로드
-          </button>
+        <div className="hero-image">
+          <img src="./images/main-section1.png" alt="MMV 절세 이미지" />
         </div>
-        <p>{status}</p>
-        {uploadProgress > 0 && (
-          <div className="progress-bar">
-            <div style={{ width: `${uploadProgress}%` }}></div>
-          </div>
-        )}
-      </section>
+      </header>
 
-      <div className="content-layout">
-        {/* 주요 기능 소개 섹션 */}
-        <section className="features">
-          <div className="feature">
-            <h3>변화된 파일 목록</h3>
-            <ul>
-              {fileList.map((file, index) => (
-                <li key={index}>
-                  <a
-                    href={file.url}
-                    className="file-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {file.filename}
-                  </a>
-                </li>
-              ))}
-            </ul>
+      {/* 변경된 두 번째 섹션 */}
+      <section className="features-section section">
+        <h2 className="section-title">MMV의 서비스</h2>
+        <div className="features-container">
+          <div className="feature-card">
+            <h3>영상 카테고리 분석</h3>
+            <p>영상에 가장 어울리는 광고를 찾아줍니다.</p>
           </div>
+          <div className="feature-card">
+            <h3>가장 적합한 광고 추천</h3>
+            <p>영상에 가장 적합한 광고를 선택해줍니다.</p>
+          </div>
+          <div className="feature-card">
+            <h3>광고 삽입</h3>
+            <p>영상에 광고를 추가시킵니다.</p>
+          </div>
+        </div>
         </section>
 
-        <section className="additional-sections">
-          {/* 동영상 섹션 */}
-          <div className="video-container">
-            <div className="video-item">
-              <h3>{videos[0].title}</h3>
-              <video
-                src={videos[0].src}
-                controls
-                autoPlay
-                muted
-                loop
-                className="video-player"
-              />
+        {/* 3번째 섹션 */}
+        <section className="how-to-use-section section">
+          <h2 className="section-title">이용 방법</h2>
+          <div className="slider-container">
+            <div
+              className="slider"
+              ref={containerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+            >
+              {steps.map((step, index) => (
+                <div className="step-item" key={index}>
+                  <h3 className="step-title">{step.title}</h3>
+                  <p className="step-description">{step.description}</p>
+                </div>
+              ))}
             </div>
-            <div className="video-item">
-              <h3>{videos[1].title}</h3>
-              <video
-                src={videos[1].src}
-                controls
-                autoPlay
-                muted
-                loop
-                className="video-player"
-              />
+            <div className="slider-controls">
+              <button className="arrow-button left" onClick={() => handleScroll("left")}>
+                <img src="./images/arrow-left.png" alt="이전" />
+              </button>
+              <button className="arrow-button right" onClick={() => handleScroll("right")}>
+                <img src="./images/arrow-right.png" alt="다음" />
+              </button>
             </div>
           </div>
-
-          {/* 가이드라인 섹션 */}
-          <div className="guideline-box">
-            <h3>가이드라인</h3>
-            <ul>
-              <li>동영상 파일은 MP4 형식만 지원됩니다.</li>
-              <li>파일 크기는 최대 50MB까지 업로드 가능합니다.</li>
-              <li>업로드가 완료되면 파일 목록에서 확인하세요.</li>
-              <li>기타 문의 사항은 문의 페이지를 이용하세요.</li>
-            </ul>
+        </section>
+      {/* 주요 섹션 4 */}
+        <section className="employee-management section">
+          <div className="employee-management-header">
+            <h2 className="employee-management-title">서비스 비교</h2>
+            <p className="employee-management-description">
+              MMV는 다른 광고와 무엇이 다를까요?
+            </p>
           </div>
-      </section>
-      </div>
+          <div className="employee-management-cards">
+            {services.map((service, index) => (
+              <div className="employee-management-card" key={index}>
+                <img
+                  src={service.image}
+                  alt={service.title}
+                  className="employee-management-icon"
+                />
+                <h3 className="employee-management-card-title">{service.title}</h3>
+                <p className="employee-management-card-description">
+                  {service.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
     </div>
   );
 };
