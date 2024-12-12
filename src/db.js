@@ -1,6 +1,6 @@
 import initSqlJs from "sql.js";
 
-let db = null;
+export let db = null;
 
 export const initializeDatabase = async () => {
 
@@ -75,7 +75,7 @@ export const getInquiries = async (category) => {
 
   const stmt = db.prepare(`
     SELECT * FROM inquiries WHERE category = ?
-  `);
+  `, [category]);
   const inquiries = [];
 
   while (stmt.step()) {
@@ -83,7 +83,6 @@ export const getInquiries = async (category) => {
   }
 
   stmt.free(); // 메모리 해제
-  console.log("Retrieved inquiries:", inquiries); // 디버깅 로그
   return inquiries;
 };
 
@@ -118,9 +117,14 @@ export const deleteInquiry = (id) => {
 };
 
 export const incrementViews = async (id) => {
-  db.run(`
-    UPDATE inquiries SET views = views + 1 WHERE id = ?
-  `, [id]);
+  try {
+    const stmt = db.prepare(`UPDATE inquiries SET views = views + 1 WHERE id = ?`);
+    stmt.run([id]);
+    stmt.free();
+    console.log(`Views incremented for post ID: ${id}`);
+  } catch (error) {
+    console.error("Error incrementing views:", error);
+  }
 };
 
 // 카테고리별 게시글 수 계산 함수 추가

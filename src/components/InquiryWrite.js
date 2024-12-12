@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { addInquiry } from "../db";
 
-const InquiryWrite = ({ categories, setCategories }) => {
+const InquiryWrite = ({ categories, setCategories, refreshInquiries }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [searchParams] = useSearchParams();
@@ -20,7 +20,10 @@ const InquiryWrite = ({ categories, setCategories }) => {
     try {
       await addInquiry(category, title, content); // 데이터 삽입
       alert("글이 성공적으로 등록되었습니다!");
-      window.location.reload(); // 새로고침
+      if (refreshInquiries) {
+        refreshInquiries(); // Inquiry.js 상태 업데이트
+      }
+      navigate(`/inquiry?category=${category}`); 
     } catch (error) {
       console.error("Error adding inquiry:", error);
       alert("글 등록 중 문제가 발생했습니다.");

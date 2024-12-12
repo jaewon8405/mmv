@@ -7,21 +7,25 @@ const Inquiry = ({ categories }) => {
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const category = (searchParams.get("category") || "notice").toLowerCase();
-  console.log("Current category:", category);
 
   useEffect(() => {
-    const loadInquiries = async () => {
+    loadInquiries(category);
+  }, [category]);
+
+  const loadInquiries = async () => {
       try {
         await initializeDatabase(); // 데이터베이스 초기화 보장
         const inquiries = await getInquiries(category);
-        console.log("Loaded inquiries:", inquiries);
         setFilteredPosts(inquiries);
       } catch (error) {
         console.error("Error loading inquiries:", error);
       }
     };
-    loadInquiries();
-  }, [category]);
+
+  // 글 등록 후 호출되는 상태 업데이트 함수 추가
+  const refreshInquiries = async () => {
+    await loadInquiries(category);
+  };
 
   const handleSearch = useCallback(() => {
     if (searchQuery) {

@@ -1276,6 +1276,75 @@ li {
   background-color: #c82333;
 }
 
+/* 상세보기 컨테이너 */
+.inquiry-detail-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.detail-header {
+  width: 30%;
+  padding: 10px;
+  background-color: #f8f9fa;
+  font-weight: bold;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.detail-data {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+.comments-section {
+  margin-top: 30px;
+}
+
+.comments-section h2 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.comment-list {
+  margin-top: 20px;
+}
+
+.comment-item {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.comment-item p {
+  margin: 0;
+}
+
+.comment-item small {
+  color: #999;
+}
+
 /* 로그인 화면 */
 /* 전체 컨테이너 스타일 */
 .login-container {

@@ -61,8 +61,8 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/pricing" element={<Cost />} /> {/* 요금 안내 페이지 경로 추가 */}
             <Route path="/inquiry" element={<Inquiry />} />
-            <Route path="/inquiry/write" element={<InquiryWrite categories={categories} setCategories={setCategories} />} />
-            <Route path="/inquiry/detail/:id" element={<InquiryDetail categories={categories} />} />
+            <Route path="/inquiry/write" element={<InquiryWrite />} />
+            <Route path="/inquiry/detail/:id" element={<InquiryDetail />} />
           </Routes>
         </main>
       </div>
