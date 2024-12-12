@@ -1,13 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const Transform = () => {
+  const [fileList, setFileList] = useState([]);
   const [status, setStatus] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [fileList, setFileList] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadTriggered, setIsUploadTriggered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isListVisible, setIsListVisible] = useState(false); // 초기 상태 false
+  const [isUploading, setIsUploading] = useState(false); // 업로드 상태
+
+  // 파일 목록 가져오기 함수
+  const fetchFileList = useCallback(async () => {
+    const apiUrl = 'https://it8syip8u6.execute-api.ap-northeast-2.amazonaws.com/dev/files';
+    setIsLoading(true); // 로딩 시작
+    try {
+      const response = await fetch(apiUrl);
+      const files = await response.json();
+      if (Array.isArray(files)) {
+        setFileList(files);
+      } else {
+        console.error('Invalid file list format:', files);
+        setFileList([]);
+      }
+      if (isUploadTriggered && files.length > 0) {
+        setIsListVisible(true); // 업로드 후 목록 표시
+      }
+    } catch (error) {
+      console.error('파일 목록 가져오기 오류:', error);
+      setFileList([]);
+    } finally {
+      setIsLoading(false); // 로딩 종료
+    }
+  }, [isUploadTriggered]);
+
+  useEffect(() => {
+    if (isUploadTriggered) {
+      fetchFileList();
+    }
+  }, [isUploadTriggered, fetchFileList]);
 
   const videos = [
     { src: './videos/test.mp4', title: '원본' },
@@ -30,33 +62,35 @@ const Transform = () => {
       updateStatus('업로드할 파일을 선택해주세요.');
       return;
     }
-
-    setIsUploadTriggered(true); 
-
+  
+    setIsUploading(true); // 업로드 시작
+    setIsLoading(true); // 로딩 상태 시작
+  
     const apiUrl = 'https://it8syip8u6.execute-api.ap-northeast-2.amazonaws.com/dev/';
-
     const reader = new FileReader();
+  
     reader.onloadend = async function () {
       const base64File = reader.result.split(',')[1];
       const requestBody = {
         file_name: selectedFile.name,
         file_content: base64File,
       };
-
+  
       try {
         updateStatus('업로드 중...');
         setUploadProgress(50);
-
+  
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
         });
-
+  
         if (response.ok) {
           updateStatus('업로드 완료!');
           setUploadProgress(100);
-          fetchFileList();
+          await fetchFileList(); // 파일 목록 가져오기
+          setIsListVisible(true); // 파일 목록 표시
           removeSelectedFile(); // 업로드 후 초기화
         } else {
           const errorText = await response.text();
@@ -65,34 +99,17 @@ const Transform = () => {
       } catch (error) {
         updateStatus(`오류 발생: ${error.message}`);
       } finally {
+        setIsUploading(false); // 업로드 상태 종료
+        setIsLoading(false); // 로딩 상태 종료
         setTimeout(() => {
           setUploadProgress(0);
         }, 3000);
       }
     };
-
+  
     reader.readAsDataURL(selectedFile);
   };
-
-  const fetchFileList = async () => {
-    const apiUrl = 'https://it8syip8u6.execute-api.ap-northeast-2.amazonaws.com/dev/files';
   
-    try {
-      const response = await fetch(apiUrl);
-      const files = await response.json();
-  
-      // 응답 데이터가 배열인지 확인
-      if (Array.isArray(files)) {
-        setFileList(files);
-      } else {
-        console.error('Invalid file list format:', files);
-        setFileList([]); // 배열이 아니면 빈 배열 설정
-      }
-    } catch (error) {
-      console.error('파일 목록 가져오기 오류:', error);
-      setFileList([]); // 에러 발생 시 빈 배열로 초기화
-    }
-  };
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -115,16 +132,6 @@ const Transform = () => {
   const handleClick = () => {
     document.getElementById('fileInput').click();
   };
-
-  useEffect(() => {
-    if (isUploadTriggered) {
-      fetchFileList();
-    }
-  }, [isUploadTriggered]);
-
-  useEffect(() => {
-    console.log('fileList 상태:', fileList);
-  }, [fileList]);
 
   return (
     <div className="home-container">
@@ -181,8 +188,11 @@ const Transform = () => {
         <section className="features">
           <div className="feature">
             <h3>변화된 파일 목록</h3>
+            {isUploading || isLoading ? ( // 로딩 중일 때 스피너 표시
+            <div className="spinner"></div>
+          ) : isListVisible ? (
               <ul>
-                {Array.isArray(fileList) && fileList.length > 0 ? (
+                {fileList.length > 0 ? (
                   fileList.map((file, index) => (
                     <li key={index}>
                       <a
@@ -199,6 +209,9 @@ const Transform = () => {
                   <p>업로드가 완료되면 목록이 표시됩니다.</p>
                 )}
               </ul>
+            ) : (
+                <p>업로드가 완료되면 목록이 표시됩니다.</p>
+          )}
           </div>
         </section>
 
