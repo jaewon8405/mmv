@@ -6,6 +6,7 @@ const Transform = () => {
   const [fileList, setFileList] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploadTriggered, setIsUploadTriggered] = useState(false);
 
   const videos = [
     { src: './videos/test.mp4', title: '원본' },
@@ -29,7 +30,9 @@ const Transform = () => {
       return;
     }
 
-    const apiUrl = 'https://fipoc9b835.execute-api.ap-northeast-2.amazonaws.com/Prod/';
+    setIsUploadTriggered(true); 
+
+    const apiUrl = 'https://it8syip8u6.execute-api.ap-northeast-2.amazonaws.com/dev/';
 
     const reader = new FileReader();
     reader.onloadend = async function () {
@@ -71,14 +74,22 @@ const Transform = () => {
   };
 
   const fetchFileList = async () => {
-    const apiUrl = 'https://fipoc9b835.execute-api.ap-northeast-2.amazonaws.com/Prod/files';
-
+    const apiUrl = 'https://it8syip8u6.execute-api.ap-northeast-2.amazonaws.com/dev/files';
+  
     try {
       const response = await fetch(apiUrl);
       const files = await response.json();
-      setFileList(files);
+  
+      // 응답 데이터가 배열인지 확인
+      if (Array.isArray(files)) {
+        setFileList(files);
+      } else {
+        console.error('Invalid file list format:', files);
+        setFileList([]); // 배열이 아니면 빈 배열 설정
+      }
     } catch (error) {
       console.error('파일 목록 가져오기 오류:', error);
+      setFileList([]); // 에러 발생 시 빈 배열로 초기화
     }
   };
 
@@ -104,10 +115,15 @@ const Transform = () => {
     document.getElementById('fileInput').click();
   };
 
+  useEffect(() => {
+    if (isUploadTriggered) {
+      fetchFileList();
+    }
+  }, [isUploadTriggered]);
 
   useEffect(() => {
-    fetchFileList();
-  }, []);
+    console.log('fileList 상태:', fileList);
+  }, [fileList]);
 
   return (
     <div className="home-container">
@@ -164,24 +180,28 @@ const Transform = () => {
         <section className="features">
           <div className="feature">
             <h3>변화된 파일 목록</h3>
-            <ul>
-              {fileList.map((file, index) => (
-                <li key={index}>
-                  <a
-                    href={file.url}
-                    className="file-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {file.filename}
-                  </a>
-                </li>
-              ))}
-            </ul>
+              <ul>
+                {Array.isArray(fileList) && fileList.length > 0 ? (
+                  fileList.map((file, index) => (
+                    <li key={index}>
+                      <a
+                        href={file.url}
+                        className="file-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {file.filename}
+                      </a>
+                    </li>
+                  ))
+                ) : (
+                  <p>업로드가 완료되면 목록이 표시됩니다.</p>
+                )}
+              </ul>
           </div>
         </section>
 
-        <section className="additional-sections">
+        <section className="additi onal-sections">
           {/* 동영상 섹션 */}
           <div className="video-container">
             <div className="video-item">

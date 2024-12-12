@@ -24,13 +24,13 @@ const Login = () => {
           </div>
           <button type="submit" className="login-button">로그인</button>
         </form>
-        <div className="options">
-          <a href="#" className="option-link">아이디 찾기</a>
-          <span className="divider">|</span>
-          <a href="#" className="option-link">비밀번호 찾기</a>
-          <span className="divider">|</span>
-          <a href="#" className="option-link">회원가입</a>
-        </div>
+          <div className="options">
+            <button onClick={() => alert('아이디 찾기 기능')} className="option-link">아이디 찾기</button>
+              <span className="divider">|</span>
+            <button onClick={() => alert('비밀번호 찾기 기능')} className="option-link">비밀번호 찾기</button>
+              <span className="divider">|</span>
+            <button onClick={() => alert('회원가입 기능')} className="option-link">회원가입</button>
+          </div>
       </div>
     </div>
   );

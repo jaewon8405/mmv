@@ -1,38 +1,30 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { addInquiry } from "../db";
 
 const InquiryWrite = ({ categories, setCategories }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [searchParams] = useSearchParams();
-  const category = searchParams.get('category') || 'notice';
+  const category = searchParams.get("category") || "notice";
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!title || !content) {
-      alert('모든 필드를 입력해주세요.');
+      alert("모든 필드를 입력해주세요.");
       return;
     }
-
-    const newPost = {
-      id: Date.now(),
-      title,
-      content,
-      createdAt: new Date().toISOString().split('T')[0],
-      views: 0,
-    };
-
-    setCategories((prevCategories) => {
-      const updatedCategory = prevCategories[category] || [];
-      return {
-        ...prevCategories,
-        [category]: [...updatedCategory, newPost],
-      };
-    });
-
-    navigate(`/inquiry?category=${category}`);
+  
+    try {
+      await addInquiry(category, title, content); // 데이터 삽입
+      alert("글이 성공적으로 등록되었습니다!");
+      window.location.reload(); // 새로고침
+    } catch (error) {
+      console.error("Error adding inquiry:", error);
+      alert("글 등록 중 문제가 발생했습니다.");
+    }
   };
 
   const handleCancel = () => {

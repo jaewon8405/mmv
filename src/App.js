@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom';
 import Home from './components/Home';
 import Transform from './components/Transform';
 import Inquiry from './components/Inquiry.js';
@@ -8,18 +8,30 @@ import mmvLogo from './mmvlogo.png'; // 로고 이미지 경로
 import InquiryWrite from './components/InquiryWrite';
 import Cost from './components/Cost.js';
 import Login from './components/Login.js';
+import InquiryDetail from './components/InquiryDetail';
+
+import { Buffer } from 'buffer';
+import process from 'process';
+window.Buffer = Buffer;
+window.process = process;
 
 
 const App = () => {
   const navbarHeight = 60;
 
-  const [categories, setCategories] = useState({
-    general: [],
-    ads: [],
-    notices: [],
+  const [categories, setCategories] = useState(() => {
+    const storedCategories = JSON.parse(localStorage.getItem("categories"));
+    if (!storedCategories) {
+      const initialCategories = { notice: [], qna: [], free: [] };
+      localStorage.setItem("categories", JSON.stringify(initialCategories));
+      return initialCategories;
+    }
+    return storedCategories;
   });
 
-  
+  useEffect(() => {
+    localStorage.setItem("categories", JSON.stringify(categories));
+  }, [categories]);
 
   return (
     <Router>
@@ -48,37 +60,15 @@ const App = () => {
             <Route path="/transform" element={<Transform />} />
             <Route path="/login" element={<Login />} />
             <Route path="/pricing" element={<Cost />} /> {/* 요금 안내 페이지 경로 추가 */}
+            <Route path="/inquiry" element={<Inquiry />} />
+            <Route path="/inquiry/write" element={<InquiryWrite categories={categories} setCategories={setCategories} />} />
+            <Route path="/inquiry/detail/:id" element={<InquiryDetail categories={categories} />} />
           </Routes>
         </main>
       </div>
-      <Routes>
-        {/* Inquiry는 /inquiry 경로에서만 렌더링 */}
-        <Route
-          path="/inquiry"
-          element={<Inquiry categories={categories} setCategories={setCategories} />}
-        />
-        <Route
-          path="/inquiry/write"
-          element={<InquiryWrite categories={categories} setCategories={setCategories} />}
-        />
-      </Routes>
     </Router>
   );
 };
 
-const Header = () => {
-  const navigate = useNavigate(); // 로그인 버튼 클릭 시 사용
-  return (
-    <div className="header">
-      <h1>My App</h1>
-      <button
-        className="login-button"
-        onClick={() => navigate('/login')} // 로그인 페이지로 이동
-      >
-        로그인
-      </button>
-    </div>
-  );
-};
 
-export default App;
+export default App; 

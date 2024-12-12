@@ -23,7 +23,7 @@ const Cost = () => {
         <div className="pricing-section">
           {/* 광고 문의 */}
           <div className="pricing-category">
-            <h3>광고 문의</h3>
+            <h3>광고주 문의</h3>
             <img src="/images/advert.png" alt="광고 문의" className="pricing-image" />
             <button className="consult-button">상담하기</button>
           </div>
