@@ -1,75 +1,42 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getInquiries, initializeDatabase } from "../db";
+import { fetchInquiries } from "../api"; // API 호출 함수
 
-const Inquiry = ({ categories }) => {
+const Inquiry = () => {
+  const [posts, setPosts] = useState([]);
   const [searchParams] = useSearchParams();
-  const [filteredPosts, setFilteredPosts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const category = (searchParams.get("category") || "notice").toLowerCase();
+  const category = searchParams.get("category") || "notice"; // 현재 카테고리
 
   useEffect(() => {
-    loadInquiries(category);
-  }, [category]);
-
-  const loadInquiries = async () => {
+    const loadInquiries = async () => {
       try {
-        await initializeDatabase(); // 데이터베이스 초기화 보장
-        const inquiries = await getInquiries(category);
-        setFilteredPosts(inquiries);
+        const data = await fetchInquiries(category); // Node.js API 호출
+        setPosts(data);
       } catch (error) {
         console.error("Error loading inquiries:", error);
       }
     };
-
-  // 글 등록 후 호출되는 상태 업데이트 함수 추가
-  const refreshInquiries = async () => {
-    await loadInquiries(category);
-  };
-
-  const handleSearch = useCallback(() => {
-    if (searchQuery) {
-      setFilteredPosts((prevPosts) =>
-        prevPosts.filter((post) =>
-          post.title.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-  }, [searchQuery]);
-
+    loadInquiries();
+  }, [category]);
 
   return (
     <div className="inquiry-container">
       <h1 className="inquiry-title">문의 게시판</h1>
+
+      {/* 카테고리 탭 */}
       <div className="board-tabs">
         <Link to="?category=notice" className={`tab-link ${category === "notice" ? "active" : ""}`}>
-          공지 사항
+          공지사항
         </Link>
         <Link to="?category=qna" className={`tab-link ${category === "qna" ? "active" : ""}`}>
           Q&A
         </Link>
         <Link to="?category=free" className={`tab-link ${category === "free" ? "active" : ""}`}>
-          자유
+          자유게시판
         </Link>
       </div>
-      <div className="search-container">
-        <form
-          className="search-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSearch();
-          }}
-        >
-          <input
-            type="text"
-            className="search-input"
-            placeholder="검색어를 입력하세요"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="submit" className="search-button">검색</button>
-        </form>
-      </div>
+
+      {/* 게시글 목록 */}
       <table className="inquiry-table">
         <thead>
           <tr>
@@ -81,15 +48,15 @@ const Inquiry = ({ categories }) => {
           </tr>
         </thead>
         <tbody>
-          {filteredPosts.length > 0 ? (
-            filteredPosts.map((post, index) => (  
+          {posts.length > 0 ? (
+            posts.map((post, index) => (
               <tr key={post.id}>
                 <td>{index + 1}</td>
                 <td>
                   <Link to={`/inquiry/detail/${post.id}`}>{post.title}</Link>
                 </td>
                 <td>{post.author || "익명"}</td>
-                <td>{post.createdAt}</td>
+                <td>{new Date(post.created_at).toLocaleDateString()}</td>
                 <td>{post.views}</td>
               </tr>
             ))
@@ -100,6 +67,8 @@ const Inquiry = ({ categories }) => {
           )}
         </tbody>
       </table>
+
+      {/* 글쓰기 버튼 */}
       <div className="write-button-container">
         <Link to={`/inquiry/write?category=${category}`} className="write-button">
           글쓰기

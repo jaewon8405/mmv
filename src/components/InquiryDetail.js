@@ -1,172 +1,189 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { initializeDatabase, updateInquiry, deleteInquiry, incrementViews, db } from "../db";
+import { fetchInquiry, fetchComments, createComment, deleteComment, updateComment, updateInquiry, deleteInquiry } from "../api"; // API 호출 함수
 
-const InquiryDetail = ({ categories }) => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [post, setPost] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState("");
-  const [editedContent, setEditedContent] = useState("");
-  const [hasIncremented, setHasIncremented] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState("");
-
-  useEffect(() => {
-    const initDBAndIncrementViews = async () => {
-      if (!hasIncremented){
-        try {
-          await initializeDatabase(); // 데이터베이스 초기화
-          await incrementViews(id); // 조회수 증가
-          setHasIncremented(true);
-        } catch (error) {
-          console.error("Error initializing database or incrementing views:", error);
-        }
-      }
-    };
-    initDBAndIncrementViews();
-  }, [id, hasIncremented]);
+const InquiryDetail = () => {
+  const { id } = useParams(); // 게시글 ID 가져오기
+  const navigate = useNavigate(); // 페이지 이동을 위한 네비게이션
+  const [post, setPost] = useState(null); // 게시글 데이터
+  const [isEditing, setIsEditing] = useState(false); // 수정 모드 상태
+  const [editedTitle, setEditedTitle] = useState(""); // 수정된 제목
+  const [editedContent, setEditedContent] = useState(""); // 수정된 내용
+  const [comments, setComments] = useState([]); // 댓글 데이터
+  const [newComment, setNewComment] = useState(""); // 새 댓글
 
   useEffect(() => {
-    const loadPost = async () => {
-      try {
-        await initializeDatabase();
-        const stmt = db.prepare(`SELECT * FROM inquiries WHERE id = ?`);
-        stmt.bind([id]); // id로 바인딩
-        const post = stmt.step() ? stmt.getAsObject() : null;
-        setPost(post);
-        if (post) {
-          setEditedTitle(post.title);
-          setEditedContent(post.content);
-        }
-        stmt.free();
-      } catch (error) {
-        console.error("Error loading post:", error);
-      }
-    };
-
-    const loadComments = async () => {
-      try {
-        const stmt = db.prepare(`SELECT * FROM comments WHERE postId = ?`);
-        stmt.bind([id]);
-        const loadedComments = [];
-        while (stmt.step()) {
-          loadedComments.push(stmt.getAsObject());
-        }
-        setComments(loadedComments);
-        stmt.free();
-      } catch (error) {
-        console.error("Error loading comments:", error);
-      }
-    };
-
-    loadPost();
-    loadComments();
+    loadPostAndComments();
   }, [id]);
 
-  if (!post) {
-    return <p>로딩 중입니다...</p>; // 로딩 상태 추가
-  }
-
-  const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-
+  const loadPostAndComments = async () => {
     try {
-      const stmt = db.prepare(`INSERT INTO comments (postId, content, createdAt) VALUES (?, ?, ?)`);
-      stmt.run([id, newComment, new Date().toISOString()]);
-      stmt.free();
-      setComments([...comments, { postId: id, content: newComment, createdAt: new Date().toISOString() }]);
-      setNewComment("");
+      const postData = await fetchInquiry(id); // 게시글 데이터 로드
+      setPost(postData);
+      setEditedTitle(postData.title);
+      setEditedContent(postData.content);
+
+      const commentsData = await fetchComments(id); // 댓글 데이터 로드
+      setComments(commentsData);
     } catch (error) {
-      console.error("Error adding comment:", error);
+      console.error("Error loading post or comments:", error);
     }
   };
 
   const handleEditSave = async () => {
     if (!editedTitle || !editedContent) {
-      alert("제목과 내용을 입력하세요.");
+      alert("제목과 내용을 입력해주세요.");
       return;
     }
     try {
-      await updateInquiry(post.id, editedTitle, editedContent); // DB 업데이트
-      alert("수정되었습니다.");
-      setIsEditing(false);
-      setPost({ ...post, title: editedTitle, content: editedContent }); // 상태 업데이트
+      await updateInquiry(id, { title: editedTitle, content: editedContent }); // API 호출
+      alert("게시글이 수정되었습니다.");
+      setPost({ ...post, title: editedTitle, content: editedContent });
+      setIsEditing(false); // 수정 모드 해제
     } catch (error) {
       console.error("Error saving edited post:", error);
     }
   };
+  
 
   const handleDelete = async () => {
-    if (window.confirm("이 게시글을 삭제하시겠습니까?")) {
+    if (window.confirm("정말로 삭제하시겠습니까?")) {
       try {
-        await deleteInquiry(post.id); // DB에서 삭제
-        alert("삭제되었습니다.");
-        navigate("/inquiry");
+        await deleteInquiry(id); // API 호출로 게시글 삭제
+        alert("게시글이 삭제되었습니다.");
+        navigate(`/inquiry?category=${post.category}`); // 삭제 후 해당 카테고리 목록으로 이동
       } catch (error) {
         console.error("Error deleting post:", error);
       }
     }
   };
 
-  if (!post) return <p>게시물을 찾을 수 없습니다.</p>;
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    try {
+      const newCommentData = await createComment({ post_id: id, content: newComment });
+      setComments([...comments, newCommentData]); // 서버에서 받은 시간 정보 포함
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+  
+
+  if (!post) return <p>로딩 중입니다...</p>;
+
+  const handleCommentDelete = async (commentId) => {
+    if (window.confirm("정말로 삭제하시겠습니까?")) {
+      try {
+        await deleteComment(commentId); // 댓글 삭제 API 호출
+        setComments((prevComments) => prevComments.filter((c) => c.id !== commentId)); // 삭제된 댓글 제거
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+      }
+    }
+  };
+
+  const handleCommentEdit = async (commentId, newContent) => {
+    if (!newContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+    try {
+      await updateComment(commentId, { content: newContent }); // API 호출
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment.id === commentId ? { ...comment, content: newContent, isEditing: false } : comment
+        )
+      );
+      alert("댓글이 수정되었습니다.");
+    } catch (error) {
+      console.error("Error updating comment:", error);
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditedTitle(post?.title || ""); // 기존 제목을 수정 상태에 설정
+    setEditedContent(post?.content || ""); // 기존 내용을 수정 상태에 설정
+    setIsEditing(true); // 수정 모드 활성화
+  };
+  
+  const handleEditCancel = () => {
+    setIsEditing(false); // 수정 모드 해제
+  };
+
+  const handleCommentEditClick = (commentId) => {
+    setComments((prevComments) =>
+      prevComments.map((comment) =>
+        comment.id === commentId ? { ...comment, isEditing: true } : comment
+      )
+    );
+  };
+  
+  const handleCommentEditCancel = (commentId) => {
+    setComments((prevComments) =>
+      prevComments.map((comment) =>
+        comment.id === commentId ? { ...comment, isEditing: false } : comment
+      )
+    );
+  };
+  
 
   return (
-    <div className="inquiry-detail-container">
-      {isEditing ? (
-        <div className="edit-container">
-          <h2>게시물 수정</h2>
-          <div className="form-group">
-            <label>제목</label>
-            <input
-              className="form-input"
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>내용</label>
-            <textarea
-              className="form-textarea"
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              rows="5"
-            />
-          </div>
-          <button className="save-button" onClick={handleEditSave}>저장</button>
-          <button className="cancel-button" onClick={() => setIsEditing(false)}>취소</button>
+    <div className="detail-container">
+      {/* 글 정보 박스 */}
+      <div className="detail-info">
+        <h1 className="detail-title"> {isEditing ? (
+          <input
+            type="text"
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+            placeholder="제목을 입력하세요"
+          />
+        ) : (
+          post?.title
+        )}</h1>
+        <div className="detail-meta">
+          <span>작성자: {post?.author || "익명"}</span>
+          <span>작성일: {new Date(post?.created_at).toLocaleDateString()}</span>
+          <span>조회수: {post?.views}</span>
         </div>
-      ) : (
-        <>
-          <table className="detail-table">
-            <tbody>
-              <tr>
-                <td className="detail-header">제목</td>
-                <td className="detail-data">{post.title}</td>
-              </tr>
-              <tr>
-                <td className="detail-header">작성자</td>
-                <td className="detail-data">{post.author || "익명"}</td>
-              </tr>
-              <tr>
-                <td className="detail-header">작성일</td>
-                <td className="detail-data">{post.createdAt}</td>
-              </tr>
-              <tr>
-                <td className="detail-header">내용</td>
-                <td className="detail-data">{post.content}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="detail-actions">
-            <button className="edit-button" onClick={() => setIsEditing(true)}>수정</button>
-            <button className="delete-button" onClick={handleDelete}>삭제</button>
-          </div>
-        </>
-      )}
-      <div className="comments-section">
+      </div>
+  
+      {/* 본문 */}
+      <div className="detail-content">
+        {isEditing ? (
+          <textarea
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            placeholder="내용을 입력하세요"
+            rows="5"
+          />
+        ) : (
+          <p>{post?.content}</p>
+        )}
+      </div>
+  
+      {/* 글 수정 및 삭제 버튼 */}
+      <div className="detail-buttons">
+        {isEditing ? (
+          <>
+            <button onClick={handleEditSave} className="btn-save">저장</button>
+            <button onClick={handleEditCancel} className="btn-cancel">취소</button>
+          </>
+        ) : (
+          <>
+            <button onClick={handleEditClick} className="btn-edit">수정</button>
+            <button onClick={handleDelete} className="btn-delete">삭제</button>
+          </>
+        )}
+        <button onClick={() => navigate(`/inquiry?category=${post.category}`)} className="btn-back">
+          목록으로
+        </button>
+      </div>
+  
+      {/* 댓글 섹션 */}
+      <div className="comment-section">
         <h2>댓글</h2>
         <form onSubmit={handleCommentSubmit} className="comment-form">
           <textarea
@@ -175,23 +192,44 @@ const InquiryDetail = ({ categories }) => {
             placeholder="댓글을 입력하세요"
             rows="3"
           />
-          <button type="submit" className="submit-button">등록</button>
+          <button type="submit" className="btn-add-comment">댓글 추가</button>
         </form>
-        <div className="comment-list">
-          {comments.length > 0 ? (
-            comments.map((comment, index) => (
-              <div key={index} className="comment-item">
-                <p>{comment.content}</p>
-                <small>{new Date(comment.createdAt).toLocaleString()}</small>
-              </div>
-            ))
-          ) : (
-            <p>댓글이 없습니다.</p>
-          )}
-        </div>
-      </div>
-      <div className="detail-actions">
-        <button className="back-button" onClick={() => navigate("/inquiry")}>목록으로</button>
+  
+        <ul className="comment-list">
+          {comments.map((comment) => (
+            <li key={comment.id} className="comment-item">
+              {comment.isEditing ? (
+                <div>
+                  <textarea
+                    value={comment.content}
+                    onChange={(e) =>
+                      setComments((prevComments) =>
+                        prevComments.map((c) =>
+                          c.id === comment.id ? { ...c, content: e.target.value } : c
+                        )
+                      )
+                    }
+                    rows="2"
+                  />
+                  <button onClick={() => handleCommentEdit(comment.id, comment.content)}>저장</button>
+                  <button onClick={() => handleCommentEditCancel(comment.id)}>취소</button>
+                </div>
+              ) : (
+                <div>
+                  <p>{comment.content}</p>
+                  <small>
+                    작성 시간: {new Date(comment.created_at).toLocaleString()}
+                    {comment.updated_at && ` (수정됨: ${new Date(comment.updated_at).toLocaleString()})`}
+                  </small>
+                  <div className="comment-actions">
+                    <button onClick={() => handleCommentEditClick(comment.id)}>수정</button>
+                    <button onClick={() => handleCommentDelete(comment.id)}>삭제</button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

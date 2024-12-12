@@ -7,6 +7,7 @@ const Transform = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadTriggered, setIsUploadTriggered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const videos = [
     { src: './videos/test.mp4', title: '원본' },

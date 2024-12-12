@@ -1275,61 +1275,178 @@ li {
 .cancel-button:hover {
   background-color: #c82333;
 }
-
-/* 상세보기 컨테이너 */
-.inquiry-detail-container {
+ /* 글쓰기 페이지 */
+ .write-container {
   max-width: 800px;
-  margin: 20px auto;
+  margin: 0 auto;
   padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border-radius: 5px;
 }
 
-.detail-table {
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.write-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
 }
 
-.detail-header {
-  width: 30%;
-  padding: 10px;
-  background-color: #f8f9fa;
-  font-weight: bold;
+.write-table th {
+  width: 20%;
   text-align: left;
+  padding: 10px;
+  background-color: #f1f1f1;
   border: 1px solid #ddd;
 }
 
-.detail-data {
+.write-table td {
   padding: 10px;
   border: 1px solid #ddd;
 }
 
-.comments-section {
-  margin-top: 30px;
+.write-table input,
+.write-table textarea,
+.write-table select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
-.comments-section h2 {
-  font-size: 18px;
+.button-group {
+  text-align: center;
+}
+
+.button-group .btn-primary {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button-group .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.button-group .btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.button-group .btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+
+/* 상세보기 컨테이너 */
+.detail-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.detail-info {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.detail-title {
+  font-size: 24px;
   font-weight: bold;
   margin-bottom: 10px;
+}
+
+.detail-meta {
+  font-size: 14px;
+  color: #555;
+}
+
+.detail-meta span {
+  margin-right: 15px;
+}
+
+.detail-content {
+  margin-bottom: 20px;
+}
+
+.detail-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.detail-buttons button {
+  padding: 10px 15px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-back {
+  background-color: #6c757d;
+  color: white;
+}
+
+.comment-section {
+  margin-top: 30px;
 }
 
 .comment-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .comment-form textarea {
-  width: 100%;
+  margin-bottom: 10px;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
 
+.btn-add-comment {
+  align-self: flex-end;
+  background-color: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 .comment-list {
-  margin-top: 20px;
+  list-style: none;
+  padding: 0;
 }
 
 .comment-item {
@@ -1338,11 +1455,33 @@ li {
 }
 
 .comment-item p {
-  margin: 0;
+  margin-bottom: 5px;
+}
+
+.comment-actions button {
+  margin-right: 10px;
+  font-size: 12px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.comment-actions button:first-child {
+  background-color: #ffc107;
+  color: white;
+}
+
+.comment-actions button:last-child {
+  background-color: #dc3545;
+  color: white;
 }
 
 .comment-item small {
-  color: #999;
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #888;
 }
 
 /* 로그인 화면 */
