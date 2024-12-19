@@ -14,26 +14,23 @@ const Transform = () => {
   // 파일 목록 가져오기 함수
   const fetchFileList = useCallback(async () => {
     const apiUrl = 'https://it8syip8u6.execute-api.ap-northeast-2.amazonaws.com/dev/files';
-    setIsLoading(true); // 로딩 시작
     try {
       const response = await fetch(apiUrl);
       const files = await response.json();
       if (Array.isArray(files)) {
         setFileList(files);
+        return files; // 파일 목록 반환
       } else {
         console.error('Invalid file list format:', files);
         setFileList([]);
-      }
-      if (isUploadTriggered && files.length > 0) {
-        setIsListVisible(true); // 업로드 후 목록 표시
+        return [];
       }
     } catch (error) {
       console.error('파일 목록 가져오기 오류:', error);
       setFileList([]);
-    } finally {
-      setIsLoading(false); // 로딩 종료
+      return [];
     }
-  }, [isUploadTriggered]);
+  }, []);
 
   useEffect(() => {
     if (isUploadTriggered) {
@@ -42,13 +39,18 @@ const Transform = () => {
   }, [isUploadTriggered, fetchFileList]);
 
   const videos = [
-    { src: './videos/test.mp4', title: '원본' },
+    { src: './videos/n.mp4', title: '원본' },
     { src: './videos/output.mp4', title: '변환' },
   ];
 
   const updateStatus = (message) => setStatus(message);
 
   const handleFileChange = (file) => {
+    if (!file || typeof file.name === 'undefined') {
+      // 파일이 없거나 파일 이름이 없는 경우
+      updateStatus('파일이 선택되지 않았습니다.');
+      return;
+    }
     setSelectedFile(file);
     updateStatus(`${file.name} 선택됨.`);
   };
@@ -76,8 +78,9 @@ const Transform = () => {
         file_content: base64File,
       };
   
+
       try {
-        updateStatus('업로드 중...');
+        setStatus('업로드 중...');
         setUploadProgress(50);
   
         const response = await fetch(apiUrl, {
@@ -87,29 +90,38 @@ const Transform = () => {
         });
   
         if (response.ok) {
-          updateStatus('업로드 완료!');
+          setStatus('업로드 완료!');
           setUploadProgress(100);
-          await fetchFileList(); // 파일 목록 가져오기
-          setIsListVisible(true); // 파일 목록 표시
-          removeSelectedFile(); // 업로드 후 초기화
+          setSelectedFile(null);
+  
+          // 10초 간격으로 파일 목록을 확인
+          const intervalId = setInterval(async () => {
+            const updatedFileList = await fetchFileList(); // 파일 목록을 서버에서 가져오는 함수 호출
+            const isUploadedFileIncluded = updatedFileList.some(
+              (file) => file.filename.includes(selectedFile.name)
+            );
+  
+            if (isUploadedFileIncluded) {
+              setStatus('업로드된 파일이 확인되었습니다.');
+              setIsLoading(false); // 로딩 종료
+              clearInterval(intervalId); // 주기적 호출 중단
+              setIsListVisible(true);
+            }
+          }, 10000); // 10초 간격으로 실행
         } else {
           const errorText = await response.text();
-          updateStatus(`오류 발생: ${errorText}`);
+          setStatus(`오류 발생: ${errorText}`);
         }
       } catch (error) {
-        updateStatus(`오류 발생: ${error.message}`);
+        setStatus(`오류 발생: ${error.message}`);
       } finally {
-        setIsUploading(false); // 업로드 상태 종료
-        setIsLoading(false); // 로딩 상태 종료
-        setTimeout(() => {
-          setUploadProgress(0);
-        }, 3000);
+        setUploadProgress(0);
+        setIsUploading(false);
       }
     };
   
     reader.readAsDataURL(selectedFile);
   };
-  
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -126,6 +138,8 @@ const Transform = () => {
     const file = event.dataTransfer.files[0];
     if (file) {
       handleFileChange(file);
+    } else {
+      updateStatus('파일 드래그가 실패했습니다.');
     }
   };
 
@@ -149,7 +163,14 @@ const Transform = () => {
             type="file"
             id="fileInput"
             style={{ display: 'none' }}
-            onChange={(e) => handleFileChange(e.target.files[0])}
+            onChange={(e) => {
+              const file = e.target.files ? e.target.files[0] : null;
+              if (file) {
+                handleFileChange(file);
+              } else {
+                updateStatus('파일이 선택되지 않았습니다.');
+              }
+            }}
           />
           <p>
             {selectedFile ? (
